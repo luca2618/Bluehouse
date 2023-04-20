@@ -3,9 +3,6 @@
 #include <DHT.h>
 #include <ThingSpeak.h>
 
-// Uncomment one of the lines below for whatever DHT sensor type you're using!
-#define DHTTYPE DHT11   // DHT 11
-
 
 // Replace with your network details
 const char* ssid = "Lucas - iPhone";
@@ -13,31 +10,16 @@ const char* password = "kal12345";
 
 WiFiClient client;
 
-const int DHTPin = D3;
-// Initialize DHT sensor.
-DHT dht(DHTPin, DHTTYPE);
-
-// Temporary variables
-static char celsiusTemp[7];
-static char fahrenheitTemp[7];
-static char humidityTemp[7];
-
-
-
-unsigned long channelID = 2058438; //your channel
-const char * myWriteAPIKey = "8KQT6JDMFKU2A3RK"; // your WRITE API key
+unsigned long channelID = 2087833; //your channel
+const char * myWriteAPIKey = "NZFMCV2TSYJG7KIC"; // your WRITE API key
 const char* server = "api.thingspeak.com";
 
 const int postingInterval = 20 * 1000; // post data every 20 seconds
 
 // only runs once on boot
 void setup() {
-  pinMode(A0, INPUT);
   // Initializing serial port for debugging purposes
   Serial.begin(115200);
-  delay(10);
-
-  dht.begin();
   
   // Connecting to WiFi network
   Serial.println();
@@ -58,71 +40,27 @@ void setup() {
 // runs over and over again
 void loop() {
   ThingSpeak.begin(client);
+  //api call and server part
   if (client.connect(server, 80)) {
-    
-    // Measure Signal Strength (RSSI) of Wi-Fi connection
-    long rssi = WiFi.RSSI();
+    long Air_humidity = 0;
+    long Soil_humidity = 0;
+    long CO2 = 0;
+    long Light = 0;
+    long Water_level = 0;
+    long Temperature = 0;
+    long Weight = 0;
+    long Signal_strength = WiFi.RSSI();
 
-    Serial.print("RSSI: ");
-    Serial.println(rssi); 
+    ThingSpeak.setField(1,Air_humidity);
+    ThingSpeak.setField(2,Soil_humidity);
+    ThingSpeak.setField(3,CO2);
+    ThingSpeak.setField(4,Light);
+    ThingSpeak.setField(5,Water_level);
+    ThingSpeak.setField(6,Temperature);
+    ThingSpeak.setField(7,Weight);
+    ThingSpeak.setField(8,rssi);
 
-
-    ThingSpeak.setField(4,rssi);
-
-// **** This part reads only sensors and calculates
-            // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-            float h = dht.readHumidity();
-            // Read temperature as Celsius (the default)
-            float t = dht.readTemperature();
-            // Read temperature as Fahrenheit (isFahrenheit = true)
-            float f = dht.readTemperature(true);
-            // Check if any reads failed and exit early (to try again).
-            if (isnan(h) || isnan(t) || isnan(f)) {
-              Serial.println("Failed to read from DHT sensor!");
-              strcpy(celsiusTemp,"Failed");
-              strcpy(fahrenheitTemp, "Failed");
-              strcpy(humidityTemp, "Failed");
-              // if it doesent work try to read the analog pin and send that instead..
-              ThingSpeak.setField(1,analogRead(A0));     
-            }
-            else{
-              // Computes temperature values in Celsius + Fahrenheit and Humidity
-              float hic = dht.computeHeatIndex(t, h, false);       
-              dtostrf(hic, 6, 2, celsiusTemp);             
-              float hif = dht.computeHeatIndex(f, h);
-              dtostrf(hif, 6, 2, fahrenheitTemp);         
-              dtostrf(h, 6, 2, humidityTemp);
-
-              // You can delete the following Serial.print's, it's just for debugging purposes
-              Serial.print("Humidity: ");
-              Serial.print(h);
-              Serial.print(" %\t Temperature: ");
-              Serial.print(t);
-              Serial.print(" *C ");
-              Serial.print(f);
-              Serial.print(" *F\t Heat index: ");
-              Serial.print(hic);
-              Serial.print(" *C ");
-              Serial.print(hif);
-              Serial.print(" *F");
-              Serial.print("Humidity: ");
-              Serial.print(h);
-              Serial.print(" %\t Temperature: ");
-              Serial.print(t);
-              Serial.print(" *C ");
-              Serial.print(f);
-              Serial.print(" *F\t Heat index: ");
-              Serial.print(hic);
-              Serial.print(" *C ");
-              Serial.print(hif);
-              Serial.println(" *F");
-        //end of sensor readings
-              //ThingSpeak.setField(1,t);
-              //ThingSpeak.setField(2,f);
-              //ThingSpeak.setField(3,h);
-            }
-            
-      ThingSpeak.writeFields(channelID, myWriteAPIKey);
+    ThingSpeak.writeFields(channelID, myWriteAPIKey);
   }
     client.stop();
 
